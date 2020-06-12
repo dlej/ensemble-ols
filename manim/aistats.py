@@ -256,8 +256,6 @@ class EnsembleIntroScene(Scene):
         self.play(Write(ridge))
         self.wait()
 
-
-
 class PatchScene(Scene):
 
     def construct(self):
@@ -483,12 +481,213 @@ class FormalIntroScene(Scene):
 class RiskPairwiseScene(Scene):
 
     def construct(self):
-        # TODO
-        pass
+
+        risk = TextMobject(r'''$
+            R(\boldsymbol{\beta}') = \mathbb{E}_{\mathbf{x}} [
+                (\mathbf{x}^\top \boldsymbol{\beta}
+                - \mathbf{x}^\top \boldsymbol{\beta}')^2
+            ]
+        $''')
+        risk.shift(0.5*UP)
+        self.play(Write(risk))
+        self.wait()
+
+        pairwise = TextMobject(r'''$
+            = \sum_{i,j=1}^k R_{ij}(\boldsymbol{\beta}')
+        $''')
+        pairwise.next_to(risk, DOWN)
+        pairwise.shift(0.2*RIGHT)
+        self.play(Write(pairwise))
+        self.wait()
+
+        self.play(
+            FadeOut(risk),
+            FadeOut(pairwise)
+        )
+        self.wait()
+
+class TheoremScene(Scene):
+
+    def construct(self):
+
+        theorem = TextMobject(r'\textbf{Theorem 1.}', color=BLUE)
+        theorem.shift(3*UP + 4*LEFT)
+
+        iff = TextMobject(r'If', color=YELLOW)
+        iff.next_to(theorem, DOWN, coor_mask=UP)
+        iff.move_to(theorem, aligned_edge=LEFT, coor_mask=RIGHT)
+        iff.shift(0.5*RIGHT)
+
+        self.play(Write(theorem))
+        self.wait()
+        self.play(Write(iff))
+        self.wait()
+
+        conditions_tex = [
+            r'''$
+                X_{ij} \overset{iid}{\sim} \mathcal{N}(0, 1),\,
+                ||\boldsymbol{\beta}||_2 = 1
+            $''',
+            r'''$
+                n, p \to \infty,\, p/n \to \gamma
+            $'''
+        ]
+        conditions = []
+        for tex in conditions_tex:
+            condition = TextMobject(tex)
+            prev_obj = iff if len(conditions) == 0 else conditions[-1]
+            condition.next_to(prev_obj, DOWN, coor_mask=UP)
+            condition.move_to(iff, aligned_edge=LEFT, coor_mask=RIGHT)
+            condition.shift(0.5*RIGHT)
+            conditions.append(condition)
+
+        for condition in conditions:
+            self.play(Write(condition))
+            self.wait()
+
+        thenn = TextMobject('then', color=YELLOW)
+        thenn.next_to(conditions[-1], DOWN)
+        thenn.move_to(iff, aligned_edge=LEFT, coor_mask=RIGHT)
+
+        self.play(Write(thenn))
+        self.wait()
+
+        # just use this for positioning components, not used in final product
+        ghost_result_line_one = TextMobject(r'''$
+            R^{\mathrm{ens}} = \frac{k-1}{k} \Big( \frac{(1 - \alpha)^2 + \sigma^2 \alpha^2 \gamma}{1 - \alpha^2 \gamma} \Big)
+        $''', color=RED)
+        ghost_result_line_one.next_to(thenn, DOWN)
+        ghost_result_line_one.move_to(thenn, aligned_edge=LEFT, coor_mask=RIGHT)
+        ghost_result_line_one.shift(0.5*RIGHT)
+
+        result_R = TextMobject(r'$R^{\mathrm{ens}}$')
+        result_R.move_to(ghost_result_line_one, aligned_edge=LEFT)
+        result_R.shift(0.05*UP)
+
+        result_equals_frac = TextMobject(r'$= \frac{k-1}{k} \Big($')
+        result_equals_frac.next_to(result_R, RIGHT)
+        result_equals_frac.shift(0.05*DOWN + 0.05*LEFT)
+
+        result_limiting = TextMobject(r'$\frac{(1 - \alpha)^2 + \sigma^2 \alpha^2 \gamma}{1 - \alpha^2 \gamma}$')
+        result_limiting.next_to(result_equals_frac, RIGHT)
+        result_limiting.shift(0.17*LEFT + 0.03*UP)
+
+        result_paren = TextMobject(r'$\Big)$')
+        result_paren.next_to(result_limiting, RIGHT)
+        result_paren.move_to(result_equals_frac, coor_mask=UP)
+        result_paren.shift(0.16*LEFT)
+
+        result_line_two = TextMobject(r'''$
+            + \frac{1}{k} \Big( \frac{\eta (1 - \alpha) + \sigma^2 \alpha \gamma}{\eta - \alpha \gamma} \Big)
+        $''')
+        result_line_two.next_to(result_equals_frac, DOWN, aligned_edge=LEFT)
+        result_line_two.shift(RIGHT)
+
+        result_line_one = VGroup(result_R, result_equals_frac, result_limiting, result_paren)
+
+        self.play(Write(result_line_one))
+        self.play(Write(result_line_two))
+        self.wait()
+
+        result_to = TextMobject(r'$\to$')
+        result_to.move_to(result_equals_frac)
+        result_to.next_to(result_limiting, LEFT, coor_mask=RIGHT)
+        result_R_copy = result_R.copy()
+        result_R_copy.next_to(result_to, LEFT, coor_mask=RIGHT)
+        self.play(
+            result_R.move_to, result_R_copy,
+            Transform(result_equals_frac, result_to),
+            FadeOut(result_paren),
+            FadeOut(result_line_two)
+        )
+        self.wait()
+
+        to_fade = Group(
+            theorem, iff, thenn, *conditions
+        )
+        self.play(FadeOut(to_fade))
+        self.wait()
+
+        #old_theorem_group = Group(result_R, result_equals_frac, result_limiting)
+        #self.play(FadeOut(old_theorem_group))
+        #self.wait()
+
+        inf = TextMobject(r'$\inf_\alpha$')
+        inf.next_to(result_R, LEFT, buff=SMALL_BUFF)
+        inf.shift(0.02*DOWN)
+
+        equals = TextMobject(r'$=$')
+        equals.move_to(result_equals_frac)
+
+        minimum = TextMobject(r'''$
+            \frac{1}{2} \Big( 
+                1 - \sigma^2 - \gamma^{-1}
+                + \sqrt{(1 - \sigma^2 - \gamma^{-1})^2 + 4\sigma^2}
+            \Big)
+        $''')
+        minimum.move_to(result_limiting)
+        minimum.next_to(equals, RIGHT, buff=MED_SMALL_BUFF, coor_mask=RIGHT)
+
+        new_result_g = Group(
+            inf, result_R_copy, equals, minimum
+        )
+        new_result_g.center()
+
+        new_theorem = TextMobject(r'Theorem 2.', color=BLUE)
+        new_theorem.move_to(theorem, aligned_edge=LEFT)
+        new_theorem.next_to(new_result_g, UP, coor_mask=UP)
+
+        self.play(Write(new_theorem))
+        self.wait()
+
+        self.play(
+            result_R.move_to, result_R_copy,
+            Transform(result_equals_frac, equals),
+            result_limiting.shift, result_R_copy.get_center() - result_R.get_center()
+        )
+        self.wait()
+
+        self.play(Write(inf))
+        self.play(
+            Transform(result_limiting, minimum)
+        )
+        self.wait()
+
+        ridge = TextMobject(r'$=\inf_\lambda R^{\mathrm{ridge}}$')
+        ridge.next_to(minimum, DOWN)
+        ridge.shift(3.99*LEFT)
+
+        self.play(Write(ridge))
+        self.wait()
 
 class AcknowledgmentScene(Scene):
 
     def construct(self):
+
+        arxiv = TextMobject('arXiv:1910.04743', color=BLUE)
+        arxiv.shift(2*UP + 3*LEFT)
+
+        self.play(Write(arxiv))
+        self.wait()
+
+        points_tex = [
+            'convergence plots',
+            'connection to dropout',
+            'more'
+        ]
+
+        points = []
+        for tex in points_tex:
+            point = TextMobject(r'$\cdot$ ' + tex)
+            prev_obj = arxiv if len(points) == 0 else points[-1]
+            point.next_to(prev_obj, DOWN, coor_mask=UP)
+            point.move_to(arxiv, aligned_edge=LEFT, coor_mask=RIGHT)
+            point.shift(0.5*RIGHT)
+            points.append(point)
+
+        for point in points:
+            self.play(Write(point))
+            self.wait()
 
         ack_text = '''
         This work was supported by NSF grants CCF-1911094, IIS-1838177, and IIS1730574; 
@@ -496,5 +695,8 @@ class AcknowledgmentScene(Scene):
         DARPA grant G001534-7500; and a Vannevar Bush Faculty Fellowship, ONR grant N00014-18-1-2047.
         '''
         ack = TextMobject(ack_text)
+        ack.scale(0.7)
+        ack.next_to(points[-1], DOWN, buff=LARGE_BUFF, coor_mask=UP)
 
-        self.add(ack)
+        self.play(FadeIn(ack))
+        self.wait()
