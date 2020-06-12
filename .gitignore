@@ -1,0 +1,6 @@
+.vscode
+manim/videos
+manim/Tex
+manim/vegas
+manim/render
+__pycache__
