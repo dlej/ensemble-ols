@@ -8,6 +8,7 @@ from matplotlib import cm, colors, pyplot as plt
 
 TITLE_SCALE = 1.4
 SMALL_SCALE = 0.7
+MED_SMALL_SCALE = 0.8
 PATH_TO_IMAGES = 'images'
 MARGIN_SCALE = 0.9
 CMAP = colors.LinearSegmentedColormap.from_list('3b1b_bwr', [BLUE, WHITE, RED])
@@ -146,58 +147,60 @@ class TitleScene(Scene):
         title.scale(TITLE_SCALE)
         subtitle = TextMobject('AISTATS 2020')
         title_vg = VGroup(title, subtitle)
-        title_vg.arrange(direction=DOWN, center=True)
+        title_vg.arrange(direction=DOWN)
+        title_vg.shift(1.5*UP)
 
         self.play(Write(title_vg))
         self.wait()
 
-        self.play(FadeOut(title_vg))
-        self.wait()
-
-class AuthorScene(Scene):
-
-    def construct(self):
-
         authors = [
-            ['Daniel LeJeune', 'daniel.jpg', 'Rice University'],
+            ['Daniel LeJeune (speaker)', 'daniel.jpg', 'Rice University'],
             ['Hamid Javadi', 'hamid.jpg', 'Rice University'],
             ['Richard G. Baraniuk', 'baraniuk.jpg', 'Rice University']
         ]
 
-        photos = []
-        author_affils = []
+        photos = Group()
+        author_affils = VGroup()
 
         for i, (author_name, photo_filename, university) in enumerate(authors):
 
             photo = ImageMobject(os.path.join(PATH_TO_IMAGES, photo_filename))
             photo.scale(MARGIN_SCALE)
-            photo.move_to([-3, 2 - 2*i, 0], aligned_edge=RIGHT)
-            photos.append(photo)
+            photo.move_to([-4 + 4*i, -1, 0], aligned_edge=ORIGIN)
+            photos.add(photo)
 
             name_mobject = TextMobject(author_name)
             univ_mobject = TextMobject(university)
-            univ_mobject.scale(SMALL_SCALE)
+            univ_mobject.scale(MED_SMALL_SCALE)
 
             author_affil_vg = VGroup(name_mobject, univ_mobject)
-            author_affil_vg.arrange(direction=DOWN, aligned_edge=LEFT)
-            author_affil_vg.next_to(photo, direction=RIGHT)
-            author_affils.append(author_affil_vg)
+            author_affil_vg.scale(SMALL_SCALE)
+            author_affil_vg.arrange(direction=DOWN, aligned_edge=ORIGIN)
+            # fix alignment of affiliation with dangling letters:
+            author_affil_vg.next_to(photo, direction=DOWN)
+            if i > 0:
+                univ_mobject.move_to(author_affils[0][-1], coor_mask=UP)
+            author_affils.add(author_affil_vg)
 
         self.play(
             LaggedStartMap(
                 lambda x: LaggedStartMap(FadeIn, x, lag_ratio=0.1),
-                Group(Group(*photos), VGroup(*author_affils)),
+                Group(photos, author_affils),
                 lag_ratio=0.5
             )
         )
         self.wait()
+
         self.play(
+            FadeOut(title_vg),
             LaggedStartMap(
                 lambda x: LaggedStartMap(FadeOut, x, lag_ratio=0.1),
                 Group(*[Group(*z) for z in zip(photos, author_affils)]),
                 lag_ratio=0.1
             )
         )
+        self.wait()
+
         self.wait()
 
 class EnsembleIntroScene(Scene):
@@ -525,7 +528,7 @@ class TheoremScene(Scene):
 
         conditions_tex = [
             r'''$
-                X_{ij} \overset{iid}{\sim} \mathcal{N}(0, 1),\,
+                X_{ij} \overset{\mathrm{iid}}{\sim} \mathcal{N}(0, 1),\,
                 ||\boldsymbol{\beta}||_2 = 1
             $''',
             r'''$
@@ -587,6 +590,21 @@ class TheoremScene(Scene):
 
         self.play(Write(result_line_one))
         self.play(Write(result_line_two))
+        self.wait()
+
+        eta_pop_1 = TextMobject(r'$\small\eta$', color=YELLOW)
+        eta_pop_1.scale(0.75)
+        eta_pop_1.shift(1.74*DOWN + 1.145*LEFT)
+
+        eta_pop_2 = eta_pop_1.copy()
+        eta_pop_2.shift(0.41*DOWN + 0.76*RIGHT)
+
+        eta_pop_group = VGroup(eta_pop_1, eta_pop_2)
+
+        self.play(Write(eta_pop_group))
+        self.wait()
+
+        self.play(FadeOut(eta_pop_group))
         self.wait()
 
         result_to = TextMobject(r'$\to$')
